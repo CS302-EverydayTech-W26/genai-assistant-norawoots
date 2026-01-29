@@ -20,7 +20,7 @@ class GeminiClient:
         
         else:
             # TO DO: Modify system instruction based on the purpose of your GenAI Assistant
-            system_instruction = "YOUR SYSTEM INSTRUCTION HERE"
+            my_system_instruction = "Be a helpful AI assistant. Thanks!"
             
             # Add the prompt to the chat history
             self.chat_history += [types.Content(
@@ -29,7 +29,17 @@ class GeminiClient:
                 )]
 
             # TO DO: Use the client's chat history & system instruction to prompt Gemini
-
+            response = self.client.models.generate_content(
+                    model="gemini-3-flash-preview", 
+                    config=types.GenerateContentConfig(system_instruction=my_system_instruction),
+                    contents=self.chat_history
+                )
+            
             # TO DO: Add the response text from Gemini to the client's chat history
-
+            self.chat_history += [types.Content(
+                  role='model',
+                  parts=[types.Part.from_text(text=response.text)]
+                )]
+            
             # TO DO: Return the response text from Gemini
+            print(response.text)
