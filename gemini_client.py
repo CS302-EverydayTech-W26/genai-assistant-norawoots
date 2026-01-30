@@ -1,7 +1,7 @@
 from google import genai
 import os
 import sys
-from google.genai import types
+from google.genai import types, errors
 import gemini_config as config
     
 class GeminiClient:
@@ -15,21 +15,43 @@ class GeminiClient:
             self.chat_history = []
 
     def generate_response(self, user_input):
-        if self.chat_history == None:  
-            return "AI Assistant is not configured correctly"
-        
-        else:
-            # TO DO: Modify system instruction based on the purpose of your GenAI Assistant
-            system_instruction = "YOUR SYSTEM INSTRUCTION HERE"
+        try:
+            if self.chat_history == None:  
+                return "AI Assistant is not configured correctly"
             
-            # Add the prompt to the chat history
-            self.chat_history += [types.Content(
-                  role='user',
-                  parts=[types.Part.from_text(text=user_input)]
-                )]
+            else:
+                # TO DO: Modify system instruction based on the purpose of your GenAI Assistant
+                my_system_instruction = "Be a helpful AI assistant. Thanks!"
+                
+                # Add the prompt to the chat history
+                self.chat_history += [types.Content(
+                    role='user',
+                    parts=[types.Part.from_text(text=user_input)]
+                    )]
 
-            # TO DO: Use the client's chat history & system instruction to prompt Gemini
+                # TO DO: Use the client's chat history & system instruction to prompt Gemini
+                response = self.client.models.generate_content(
+                        model="gemini-3-flash-preview", 
+                        config=types.GenerateContentConfig(system_instruction=my_system_instruction),
+                        contents=self.chat_history
+                    )
+                
+                # TO DO: Add the response text from Gemini to the client's chat history
+                self.chat_history += [types.Content(
+                    role='model',
+                    parts=[types.Part.from_text(text=response.text)]
+                    )]
+                
+                # TO DO: Return the response text from Gemini
+                print(response.text)    
+            return response.text
 
-            # TO DO: Add the response text from Gemini to the client's chat history
-
-            # TO DO: Return the response text from Gemini
+        except (errors.ServerError, errors.ClientError) as e:
+            if "429" in str(e):
+                print("Sorry, you have reached your query quota, please try again another time.")
+                return "Sorry, you have reached your query quota, please try again another time."
+            elif "503" in str(e):
+                print("Sorry, I am experiencing a high request demand right now. Please try again in a few minutes!")
+                return "Sorry, I am experiencing a high request demand right now. Please try again in a few minutes!"
+            else:
+                raise
