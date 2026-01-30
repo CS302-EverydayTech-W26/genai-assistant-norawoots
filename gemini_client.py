@@ -46,6 +46,12 @@ class GeminiClient:
                 print(response.text)    
             return response.text
 
-        except errors.ServerError as e:
-            print("Sorry, I am experiencing a high request demand right now. Please try again later!")
-            return "Sorry, I am experiencing a high request demand right now. Please try again later!"
+        except (errors.ServerError, errors.ClientError) as e:
+            if "429" in str(e):
+                print("Sorry, you have reached your query quota, please try again another time.")
+                return "Sorry, you have reached your query quota, please try again another time."
+            elif "503" in str(e):
+                print("Sorry, I am experiencing a high request demand right now. Please try again in a few minutes!")
+                return "Sorry, I am experiencing a high request demand right now. Please try again in a few minutes!"
+            else:
+                raise
